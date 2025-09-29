@@ -1,18 +1,39 @@
-import jwt from "jsonwebtoken";
-import User from "../models/user.models.js";
-import dotenv from "dotenv";
+const jwt = require('jsonwebtoken');
+const User = require('../models/user.models.js');
 
-dotenv.config();
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-export const requireAuth = async (req, res, next) => {
-    const token = req.header("Authorization")?.replace("Bearer ", "");
-    if (!token) return res.status(401).json({ msg: "No token" });
+// Middleware to verify JWT and attach user to req
+async function authMiddleware(req, res, next) {
     try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = await User.findById(payload.id);
-        if (!req.user) return res.status(401).json({ msg: "Invalid token" });
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                message: 'No token provided'
+            });
+        }
+
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = await User.findById(decoded.id);
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid token'
+            });
+        }
+
+        // attach user info to request
+        req.user = { id: user._id, email: user.email };
         next();
-    } catch (err) {
-        return res.status(401).json({ msg: "Token invalid" });
+    } catch (error) {
+        return res.status(401).json({
+            success: false,
+            message: 'Invalid token'
+        });
     }
-};
+}
+
+module.exports = authMiddleware;
+
