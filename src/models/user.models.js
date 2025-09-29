@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema({
     passwordHash: String,
     createdAt: { type: Date, default: Date.now },
     stats: {
-        type : mongoose.Schema.Types.ObjectId,
+        type : [mongoose.Schema.Types.ObjectId],
         ref : "Stats"
     }
 });
