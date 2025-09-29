@@ -1,6 +1,6 @@
 import express from 'express';
-import Stats from '../models/Stats.js';
-import { authMiddleware } from '../middleware/auth.js';
+import Stats from '../models/stats.models.js';
+import { authMiddleware } from '../middleware/auth.middleware.js';
 
 const statsRouter = express.Router();
 
