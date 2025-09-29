@@ -1,39 +1,44 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/user.models.js');
+import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-
-// Middleware to verify JWT and attach user to req
-async function authMiddleware(req, res, next) {
+export const authMiddleware = (req, res, next) => {
     try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) {
+        // Get token from header
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({
                 success: false,
                 message: 'No token provided'
             });
         }
 
-        const decoded = jwt.verify(token, JWT_SECRET);
-        const user = await User.findById(decoded.id);
+        const token = authHeader.split(' ')[1];
 
-        if (!user) {
+        // Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET );
+
+        // Add user id to request
+        req.userId = decoded.id;
+
+        next();
+    } catch (error) {
+        if (error.name === 'JsonWebTokenError') {
             return res.status(401).json({
                 success: false,
                 message: 'Invalid token'
             });
         }
 
-        // attach user info to request
-        req.user = { id: user._id, email: user.email };
-        next();
-    } catch (error) {
-        return res.status(401).json({
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({
+                success: false,
+                message: 'Token expired'
+            });
+        }
+
+        res.status(500).json({
             success: false,
-            message: 'Invalid token'
+            message: 'Server error'
         });
     }
-}
-
-module.exports = authMiddleware;
-
+};
