@@ -3,9 +3,13 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.models.js";
 import Stats from "../models/stats.models.js";
+import dotenv from "dotenv";
+
+
+dotenv.config();
 
 const generateToken = (userId) => {
-    return jwt.sign({ id: userId }, process.env.JWT_SECRET || 'your-secret-key-change-in-production', {
+    return jwt.sign({ id: userId }, process.env.JWT_SECRET , {
         expiresIn: '30d'
     });
 };
@@ -68,6 +72,8 @@ export  const signin = async (req, res) => {
     try {
         const { email, password } = req.body;
 
+
+
         // Validation
         if (!email || !password) {
             return res.status(400).json({
@@ -78,6 +84,8 @@ export  const signin = async (req, res) => {
 
         // Find user
         const user = await User.findOne({ email });
+
+
         if (!user) {
             return res.status(401).json({
                 success: false,
